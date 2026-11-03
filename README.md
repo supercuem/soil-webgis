@@ -1,7 +1,5 @@
-# Soil WebGIS — bản demo công khai
+# Cổng GitHub Pages của Soil Atlas Đồng Nai
 
-Đây là **bản minh họa giao diện** của Soil Atlas Đồng Nai để xem qua GitHub Pages. Sáu điểm, tất cả kết quả đo và ba vùng hiển thị trên bản đồ đều được **tạo giả lập** trong `scripts/generate-demo-data.mjs`. Chúng không phải dữ liệu nghiên cứu và không phản ánh chất lượng đất thực tế.
+Repository này chỉ chứa trang vào hệ thống tại `https://supercuem.github.io/soil-webgis/`. Nút trên trang dẫn tới bản đồ dữ liệu thật được giới hạn theo tài khoản trên Sites. Địa chỉ sẽ chuyển sang miền Sites sau khi bấm nút.
 
-Dữ liệu khảo sát thật, tọa độ lấy mẫu, API PostgreSQL và tài khoản người dùng không nằm trong repository này. Mô hình AI dự đoán chưa được xây dựng.
-
-Mở `index.html` qua web server tĩnh để xem. Bản đồ nền cần Internet. Có thể tạo lại dữ liệu minh họa bằng `node scripts/generate-demo-data.mjs`.
+Không có tọa độ, số đo, GeoJSON, Excel, API PostgreSQL hoặc mô hình AI trong GitHub repository này. Các tệp dữ liệu khảo sát thật chưa được công khai.
