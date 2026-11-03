@@ -3,51 +3,128 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#173c33" />
-    <meta name="description" content="Cổng vào bản đồ khảo sát đất Đồng Nai. Dữ liệu nghiên cứu chỉ hiển thị sau khi đăng nhập." />
-    <title>Soil Atlas Đồng Nai — Bản đồ riêng tư</title>
+    <meta name="theme-color" content="#153b35" />
+    <meta name="description" content="Bản demo Soil Atlas Đồng Nai dùng toàn bộ dữ liệu giả lập; không chứa tọa độ và kết quả khảo sát thật." />
+    <title>Soil Atlas — Bản demo công khai</title>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+    <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
     <link rel="stylesheet" href="style.css" />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+      defer
+    ></script>
+    <script src="app.js" defer></script>
   </head>
   <body>
-    <div class="page-shell">
-      <header class="topbar">
-        <a class="brand" href="./" aria-label="Soil Atlas Đồng Nai, trang chủ">
-          <span class="brand-mark" aria-hidden="true"><span></span><span></span></span>
-          <span>SOIL<span class="brand-light">ATLAS</span></span>
-        </a>
-        <span class="access-tag"><span class="access-dot" aria-hidden="true"></span> Dữ liệu riêng tư</span>
+    <div class="app-shell">
+      <header class="site-header">
+        <div class="brand" aria-label="Soil Atlas">
+          <div class="brand-symbol" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="brand-text"><strong>SOIL<span>ATLAS</span></strong><small>KHÔNG GIAN ĐẤT</small></div>
+        </div>
+        <div class="header-divider" aria-hidden="true"></div>
+        <div class="header-title">
+          <span>Bản demo giao diện</span>
+          <strong>Soil WebGIS</strong>
+        </div>
+        <div class="header-right">
+          <span class="demo-pill"><span class="pulse-dot" aria-hidden="true"></span> Dữ liệu giả lập</span>
+          <span class="header-date">Không chứa dữ liệu nghiên cứu</span>
+        </div>
       </header>
 
-      <main class="content">
-        <section class="intro" aria-labelledby="page-title">
-          <p class="eyebrow">BẢN ĐỒ KHẢO SÁT ĐẤT · ĐỒNG NAI</p>
-          <h1 id="page-title">Bản đồ tương tác<br /><em>chất lượng đất Đồng Nai.</em></h1>
-          <p class="lead">Khám phá điểm lấy mẫu, lớp loại đất và kết quả phân tích trong không gian dành riêng cho dự án. Dữ liệu khảo sát không được lưu trên GitHub Pages.</p>
-          <div class="feature-list" aria-label="Chức năng hiện có">
-            <span>Tra cứu điểm mẫu</span><span>Bật/tắt lớp bản đồ</span><span>Xem chỉ tiêu và cảnh báo</span><span>Thống kê, xuất CSV</span>
-          </div>
-        </section>
+      <main class="workspace">
+        <aside class="sidebar" aria-label="Công cụ bản đồ">
+          <div class="sidebar-scroll">
+            <div class="sidebar-intro">
+              <span class="section-kicker">KHÁM PHÁ DỮ LIỆU</span>
+              <h1>Khám phá bản đồ<br /><em>đất tương tác.</em></h1>
+              <p>Thử tìm kiếm, bật lớp và bấm điểm để xem cách website hoạt động. Mọi điểm và số đo ở đây đều giả lập.</p>
+            </div>
 
-        <section class="access-card" aria-labelledby="access-title">
-          <div class="card-icon" aria-hidden="true">↗</div>
-          <p class="card-kicker">KHÔNG GIAN DỮ LIỆU</p>
-          <h2 id="access-title">Vào bản đồ nghiên cứu</h2>
-          <p>Bản đồ thật chỉ mở cho tài khoản được cấp quyền. Sau khi bấm, trình duyệt sẽ chuyển sang miền lưu trữ riêng tư để đăng nhập.</p>
-          <a class="open-button" href="https://soil-atlas-dong-nai-2026.blue-clove-2791.chatgpt.site/" rel="noopener">Đăng nhập xem bản đồ thật <span aria-hidden="true">↗</span></a>
-          <div class="card-divider"></div>
-          <div class="numbers" aria-label="Dữ liệu có trong bản đồ riêng tư">
-            <div><strong>75</strong><span>điểm lấy mẫu</span></div>
-            <div><strong>2</strong><span>tầng độ sâu</span></div>
-            <div><strong>13</strong><span>chỉ tiêu</span></div>
+            <div class="notice" role="note">
+              <span class="notice-icon" aria-hidden="true">i</span>
+              <p><strong>BẢN DEMO CÔNG KHAI:</strong> Tọa độ, kết quả đo và vùng bản đồ đều giả lập. Dữ liệu nghiên cứu thật không được đăng ở đây; cảnh báo chỉ minh họa cách dùng.</p>
+            </div>
+
+            <section class="control-section" aria-labelledby="search-title">
+              <div class="section-heading"><h2 id="search-title">Tìm kiếm</h2><span>01</span></div>
+              <label class="field-label" for="sample-search">Mã mẫu hoặc tên khu vực</label>
+              <div class="search-wrap">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6"/><path d="m16 16 5 5"/></svg>
+                <input id="sample-search" type="search" placeholder="Ví dụ: DEMO-02, Long Thành" autocomplete="off" />
+              </div>
+              <label class="field-label field-gap" for="area-select">Địa bàn</label>
+              <div class="select-wrap"><select id="area-select"><option value="all">Tất cả địa bàn</option></select></div>
+              <label class="field-label field-gap" for="depth-select">Độ sâu lấy mẫu</label>
+              <div class="select-wrap"><select id="depth-select"><option value="0-30">0–30 cm</option><option value="30-60">30–60 cm</option></select></div>
+              <label class="field-label field-gap" for="land-category">Ngưỡng tham khảo QCVN 03:2023</label>
+              <div class="select-wrap"><select id="land-category"><option value="1">Loại 1 · nông nghiệp, đất ở…</option><option value="2">Loại 2 · rừng, thương mại…</option><option value="3">Loại 3 · công nghiệp, giao thông…</option></select></div>
+              <p class="category-hint">Đang dùng Loại 1, ngưỡng chặt nhất. Phép so sánh chỉ minh họa bằng số đo giả lập.</p>
+            </section>
+
+            <section class="control-section" aria-labelledby="layer-title">
+              <div class="section-heading"><h2 id="layer-title">Lớp chỉ tiêu</h2><span>02</span></div>
+              <p class="section-hint">Chọn chỉ tiêu để tô màu điểm mẫu theo giá trị đo.</p>
+              <label class="field-label" for="metric-select">Chỉ tiêu</label>
+              <div class="select-wrap"><select id="metric-select"><option value="ph">pH</option></select></div>
+              <label class="switch-row" for="show-points"><span>Hiện điểm lấy mẫu</span><span class="switch"><input id="show-points" type="checkbox" checked /><span class="switch-track"></span></span></label>
+              <label class="switch-row" for="show-soil"><span>Hiện vùng minh họa</span><span class="switch"><input id="show-soil" type="checkbox" /><span class="switch-track"></span></span></label>
+            </section>
+
+            <section class="control-section" aria-labelledby="stats-title">
+              <div class="section-heading"><h2 id="stats-title">Thống kê</h2><span>03</span></div>
+              <div id="stats" class="stats-grid" aria-live="polite"></div>
+              <button id="export-csv" class="export-button" type="button">Xuất CSV theo bộ lọc</button>
+            </section>
+
+            <section class="control-section results-section" aria-labelledby="results-title">
+              <div class="section-heading"><h2 id="results-title">Điểm mẫu</h2><span id="result-count">0</span></div>
+              <div id="sample-list" class="sample-list" aria-live="polite"></div>
+            </section>
+
+            <div class="sidebar-footnote">Đây là bản xem thử công khai. Dữ liệu khảo sát và thửa đất thật được giữ ngoài GitHub; chức năng AI sẽ chỉ được phát triển khi chủ dự án yêu cầu.</div>
           </div>
-          <p class="access-note">Tọa độ, số đo và tệp bản đồ thật không nằm trong mã nguồn công khai.</p>
+        </aside>
+
+        <section class="map-stage" aria-label="Bản đồ điểm minh họa">
+          <div id="map" class="map" aria-label="Bản đồ tương tác"></div>
+          <div id="map-error" class="map-error" hidden role="alert">Không tải được thư viện bản đồ. Hãy kiểm tra kết nối Internet rồi tải lại trang.</div>
+          <div class="map-topbar">
+            <div class="map-caption"><span class="map-caption-dot" aria-hidden="true"></span><span><strong>Bản đồ minh họa</strong><small id="map-caption-sub">Đang tải dữ liệu giả lập</small></span></div>
+            <div class="basemap-control" role="group" aria-label="Bản đồ nền">
+              <button type="button" class="basemap-button active" aria-pressed="true">Đường phố</button>
+              <button type="button" class="basemap-button disabled" disabled aria-label="Ảnh vệ tinh chưa khả dụng vì cần nguồn ảnh được cấp quyền" title="Cần nguồn ảnh vệ tinh được cấp quyền">Ảnh vệ tinh <span aria-hidden="true">↗</span></button>
+            </div>
+          </div>
+          <div class="map-tools" aria-label="Điều khiển bản đồ">
+            <button id="zoom-in" type="button" aria-label="Phóng to" title="Phóng to">+</button>
+            <button id="zoom-out" type="button" aria-label="Thu nhỏ" title="Thu nhỏ">−</button>
+            <span class="tool-divider" aria-hidden="true"></span>
+            <button id="fit-points" type="button" aria-label="Xem tất cả điểm mẫu" title="Xem tất cả điểm mẫu">⌖</button>
+            <button id="locate-me" type="button" aria-label="Định vị của tôi" title="Định vị của tôi">◎</button>
+          </div>
+          <div id="map-toast" class="map-toast" role="status" aria-live="polite" hidden></div>
+          <div id="coordinate-chip" class="coordinate-chip">Bấm vào bản đồ để xem tọa độ</div>
+          <div class="map-bottom">
+            <div class="legend" id="legend" aria-label="Chú giải bản đồ"></div>
+            <div class="data-credit">Nền: OpenStreetMap · Điểm và vùng: giả lập, không phải kết quả nghiên cứu</div>
+          </div>
         </section>
       </main>
-
-      <footer class="footer">
-        <span>Soil Atlas Đồng Nai</span>
-        <span>Bảng năm 2018 chưa có tọa độ; lớp thửa chưa được liên kết với điểm mẫu.</span>
-      </footer>
     </div>
+
+    <dialog id="sample-dialog" class="sample-dialog" aria-labelledby="detail-title">
+      <button id="close-detail" class="dialog-close" type="button" aria-label="Đóng chi tiết">×</button>
+      <div id="sample-detail"></div>
+    </dialog>
   </body>
 </html>
