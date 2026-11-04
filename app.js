@@ -28,7 +28,7 @@ function assessSample(sample, landCategory) {
 }
 
 // This public preview contains fabricated examples only; research data stays private.
-const state={data:null,map:null,markers:null,soil:null,soilLoading:false,metric:"ph",depth:"0-30",landCategory:"1",district:"all",query:"",showPoints:true,showSoil:false,selected:null,location:null};
+const state={data:null,map:null,markers:null,basemap:"street",layers:{soil:null,cadastre:null},loading:{soil:null,cadastre:null},metric:"ph",depth:"0-30",landCategory:"1",district:"all",query:"",showPoints:true,selected:null,location:null};
 const $=id=>document.getElementById(id);
 const number=new Intl.NumberFormat("vi-VN",{maximumFractionDigits:5});
 const indicator=()=>state.data?.indicators.find(item=>item.code===state.metric);
@@ -62,6 +62,11 @@ function renderLegend(){
   (scale?[scale.min,(scale.min+scale.max)/2,scale.max]:[null,null,null]).forEach(v=>{const span=document.createElement("span");span.textContent=v===null?"—":number.format(v);labels.append(span);});
   const note=document.createElement("div");note.className="legend-note";note.textContent=`Giá trị tương đối · tầng ${state.depth} cm · không phải mức cảnh báo`;
   el.append(title,bar,labels,note);
+  if(state.basemap!=="street"){
+    const mapNote=document.createElement("div");mapNote.className="legend-map-note";
+    mapNote.textContent=state.basemap==="cadastre"?"Đường viền nâu: ranh thửa giả lập":"Mảng màu: nhóm đất giả lập";
+    el.append(mapNote);
+  }
 }
 function renderStats(){
   const sites=filteredSites(),readings=sites.map(site=>readingAt(site)),values=numericValues(sites),kph=readings.filter(r=>r?.quality_flag==="below_detection").length;
@@ -118,13 +123,64 @@ function selectSite(site,pan){
 }
 function refreshSelectedDetail(){if(!$("sample-dialog").open||!state.selected)return;const site=state.data?.sites.find(item=>item.code===state.selected);if(site)selectSite(site,false);}
 function fitSites(){if(!state.map)return;const sites=filteredSites();if(!sites.length){toast("Không có điểm mẫu để phóng tới.");return;}state.map.fitBounds(L.latLngBounds(sites.map(site=>[site.latitude,site.longitude])).pad(.2),{maxZoom:12});}
-function soilStyle(feature){let hash=0;for(const char of (feature.properties.symbol||"?").slice(0,3))hash=(hash*31+char.charCodeAt(0))>>>0;const colors=["#7ca662","#bfaa70","#839b72","#a68d6c","#6e9e9d","#b59678"];return{color:"#526b58",weight:.65,opacity:.6,fillColor:colors[hash%colors.length],fillOpacity:.22};}
-async function showSoil(){
-  if(!state.map)return;if(!state.showSoil){if(state.soil)state.map.removeLayer(state.soil);return;}
-  if(state.soil){state.soil.addTo(state.map);state.soil.bringToBack();return;}if(state.soilLoading)return;
-  state.soilLoading=true;toast("Đang tải vùng minh họa…");
-  try{const response=await fetch("data/processed/soil-polygons.geojson");if(!response.ok)throw new Error(`HTTP ${response.status}`);const geojson=await response.json();state.soil=L.geoJSON(geojson,{style:soilStyle,onEachFeature:(feature,layer)=>{const popup=document.createElement("div"),strong=document.createElement("strong"),small=document.createElement("small");popup.className="soil-popup";strong.textContent=`Vùng giả lập: ${feature.properties.code||"—"}`;small.textContent="Hình minh họa, không phải bản đồ đất thật";popup.append(strong,small);layer.bindPopup(popup);}});if(state.showSoil){state.soil.addTo(state.map);state.soil.bringToBack();}toast(`Đã tải ${geojson.features.length} vùng minh họa.`);}
-  catch{$("show-soil").checked=false;state.showSoil=false;toast("Không tải được vùng minh họa.");}finally{state.soilLoading=false;}
+function soilStyle(feature){const group=Number((feature.properties.symbol||"").split("-").at(-1))||1;const colors=["#8baa6d","#c39068","#b6aa79"];return{color:"#526b58",weight:1,opacity:.8,fillColor:colors[(group-1)%colors.length],fillOpacity:.55,bubblingMouseEvents:false};}
+function cadastreStyle(){return{color:"#8b613f",weight:1.5,opacity:.95,fillColor:"#f4e7c7",fillOpacity:.34,bubblingMouseEvents:false};}
+function bindMapPopup(feature,layer,mode){
+  const popup=document.createElement("div"),strong=document.createElement("strong"),small=document.createElement("small");popup.className="soil-popup";
+  if(mode==="soil"){
+    strong.textContent=feature.properties.name||"Nhóm đất minh họa";
+    small.textContent=`${feature.properties.code} · vùng đất giả lập, không phải bản đồ thổ nhưỡng thật`;
+  }else{
+    strong.textContent=`Tờ ${feature.properties.sheet} · thửa ${feature.properties.parcel}`;
+    small.textContent="Ranh thửa giả lập, không thuộc hồ sơ địa chính thật";
+  }
+  popup.append(strong,small);layer.bindPopup(popup);
+}
+async function loadBasemapLayer(mode){
+  if(state.layers[mode])return state.layers[mode];
+  if(state.loading[mode])return state.loading[mode];
+  const file=mode==="soil"?"soil-polygons.geojson":"parcel-polygons.geojson";
+  state.loading[mode]=(async()=>{
+    const response=await fetch(`data/processed/${file}`);
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const geojson=await response.json();
+    if(geojson.metadata?.source_file!=="SYNTHETIC_DEMO_ONLY"||!Array.isArray(geojson.features))throw new Error("Not synthetic demo data");
+    const layer=L.geoJSON(geojson,{style:mode==="soil"?soilStyle:cadastreStyle,bubblingMouseEvents:false,onEachFeature:(feature,shape)=>bindMapPopup(feature,shape,mode)});
+    state.layers[mode]=layer;
+    return layer;
+  })().finally(()=>{state.loading[mode]=null;});
+  return state.loading[mode];
+}
+function updateBasemapButtons(){
+  document.querySelectorAll(".basemap-button[data-basemap]").forEach(button=>{
+    const active=button.dataset.basemap===state.basemap;
+    button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active));
+  });
+  renderLegend();
+}
+async function setBasemap(mode){
+  if(!state.map||!["street","cadastre","soil"].includes(mode))return;
+  state.basemap=mode;updateBasemapButtons();
+  Object.values(state.layers).forEach(layer=>{if(layer&&state.map.hasLayer(layer))state.map.removeLayer(layer);});
+  if(mode==="street")return;
+  toast(mode==="cadastre"?"Đang tải ranh thửa minh họa…":"Đang tải nhóm đất minh họa…");
+  try{
+    const layer=await loadBasemapLayer(mode);
+    if(state.basemap!==mode)return;
+    layer.addTo(state.map);layer.bringToBack();
+    if(mode==="cadastre"&&state.map.getZoom()<13&&state.data?.sites.length){
+      const center=state.map.getCenter();
+      const nearest=state.data.sites.reduce((best,site)=>{
+        const distance=(site.latitude-center.lat)**2+(site.longitude-center.lng)**2;
+        return !best||distance<best.distance?{site,distance}:best;
+      },null).site;
+      state.map.flyTo([nearest.latitude,nearest.longitude],13,{duration:.6});
+    }
+    toast(mode==="cadastre"?"Đã hiển thị ranh thửa giả lập.":"Đã hiển thị vùng thổ nhưỡng giả lập.");
+  }catch{
+    if(state.basemap!==mode)return;
+    state.basemap="street";updateBasemapButtons();toast("Không tải được lớp minh họa. Đã chuyển về bản đồ đường phố.");
+  }
 }
 function initMap(){if(typeof L==="undefined"){$("map-error").hidden=false;return;}state.map=L.map("map",{zoomControl:false,preferCanvas:true}).setView([10.95,107.05],10);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map);state.map.on("click",event=>{$("coordinate-chip").textContent=`Tọa độ: ${event.latlng.lat.toFixed(5)}, ${event.latlng.lng.toFixed(5)} · Chưa có mẫu gắn tại vị trí này`;toast("Chưa có số đo tại tọa độ này. Bấm một điểm mẫu để xem mức đo và cảnh báo.");});}
 function csvCell(value){const plain=value==null?"":String(value),safe=typeof value==="string"&&/^[=+@\-\t\r]/.test(plain)?`'${plain}`:plain;return `"${safe.replaceAll('"','""')}"`;}
@@ -140,7 +196,7 @@ function initControls(){
   $("metric-select").addEventListener("change",event=>{state.metric=event.target.value;renderAll();refreshSelectedDetail();});
   $("land-category").addEventListener("change",event=>{state.landCategory=event.target.value;refreshSelectedDetail();});
   $("show-points").addEventListener("change",event=>{state.showPoints=event.target.checked;renderMarkers();});
-  $("show-soil").addEventListener("change",event=>{state.showSoil=event.target.checked;showSoil();});
+  document.querySelectorAll(".basemap-button[data-basemap]").forEach(button=>button.addEventListener("click",()=>setBasemap(button.dataset.basemap)));
   $("export-csv").addEventListener("click",exportCsv);$("zoom-in").addEventListener("click",()=>state.map?.zoomIn());$("zoom-out").addEventListener("click",()=>state.map?.zoomOut());$("fit-points").addEventListener("click",fitSites);
   $("locate-me").addEventListener("click",()=>{if(!state.map||!navigator.geolocation){toast("Trình duyệt không hỗ trợ định vị.");return;}navigator.geolocation.getCurrentPosition(({coords})=>{if(state.location)state.map.removeLayer(state.location);state.location=L.circleMarker([coords.latitude,coords.longitude],{radius:8,color:"#fff",weight:3,fillColor:"#268bd2",fillOpacity:1}).addTo(state.map);state.map.setView([coords.latitude,coords.longitude],13);$("coordinate-chip").textContent=`Vị trí của bạn: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;},()=>toast("Không lấy được vị trí."),{enableHighAccuracy:false,timeout:10000});});
   $("close-detail").addEventListener("click",()=>$("sample-dialog").close());$("sample-dialog").addEventListener("close",()=>{state.selected=null;renderList();renderMarkers();});

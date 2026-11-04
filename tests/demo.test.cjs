@@ -8,6 +8,32 @@ const root = path.resolve(__dirname, '..');
 const survey = JSON.parse(fs.readFileSync(path.join(root, 'data/processed/survey.json'), 'utf8'));
 const zones = JSON.parse(fs.readFileSync(path.join(root, 'data/processed/soil-polygons.geojson'), 'utf8'));
 
+test('illustrative soil and parcel maps use only synthetic geometries and labels', () => {
+  const parcels = JSON.parse(fs.readFileSync(path.join(root, 'data/processed/parcel-polygons.geojson'), 'utf8'));
+  assert.equal(zones.metadata.source_file, 'SYNTHETIC_DEMO_ONLY');
+  assert.equal(zones.features.length, survey.sites.length);
+  assert.equal(parcels.metadata.source_file, 'SYNTHETIC_DEMO_ONLY');
+  assert.equal(parcels.features.length, survey.sites.length * 9);
+  for (const feature of parcels.features) {
+    assert.match(feature.properties.code, /^DEMO-T\d{2}-\d{2}$/);
+    assert.deepEqual(Object.keys(feature.properties).sort(), ['code', 'parcel', 'sheet']);
+    assert.equal(feature.geometry.type, 'Polygon');
+    const ring = feature.geometry.coordinates[0];
+    assert.deepEqual(ring[0], ring.at(-1));
+    assert.ok(ring.every(([lon, lat]) => lon >= 106 && lon <= 108 && lat >= 10 && lat <= 12));
+  }
+  assert.ok(parcels.features.every(feature => !/TENCHU|DIACHI|THUAID/i.test(JSON.stringify(feature))));
+});
+
+test('map controls offer three exclusive, clearly synthetic modes', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  for (const mode of ['street', 'cadastre', 'soil']) {
+    assert.match(html, new RegExp(`data-basemap="${mode}"`));
+  }
+  assert.match(html, /Địa chính \(minh họa\)/);
+  assert.match(html, /Thổ nhưỡng \(minh họa\)/);
+});
+
 test('public package declares and contains only fabricated sample records', () => {
   assert.equal(survey.metadata.source_file, 'SYNTHETIC_DEMO_ONLY');
   assert.equal(survey.sites.length, 6);
@@ -19,7 +45,7 @@ test('public package declares and contains only fabricated sample records', () =
     assert.deepEqual(site.samples.map(sample => sample.depth_cm), ['0-30', '30-60']);
   }
   assert.equal(zones.metadata.source_file, 'SYNTHETIC_DEMO_ONLY');
-  assert.equal(zones.features.length, 3);
+  assert.equal(zones.features.length, 6);
   assert.ok(zones.features.every(feature => feature.properties.code.startsWith('DEMO-')));
 });
 

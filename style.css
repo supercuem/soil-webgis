@@ -37,6 +37,11 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 @media(max-width:650px){.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.stat-card{padding:7px}.stat-card strong{font-size:12px}.stat-card small{font-size:8px}.export-button{margin-top:7px}.results-section{display:block;max-height:200px;overflow:auto}.sidebar-footnote{display:block;font-size:9px}.map-stage{height:60dvh;min-height:430px}}
 
 .category-hint{font-size:10px;line-height:1.45;color:#75877a;margin:7px 0 0}
+
+.map-layer-hint{margin:13px 0 0;line-height:1.45}
+.legend-map-note{margin-top:8px;padding-top:7px;border-top:1px solid #e1e9e3;color:#70583f;font-size:10px;font-weight:700}
+@media(max-width:1100px){.map-topbar{flex-wrap:wrap}.basemap-control{max-width:100%;overflow-x:auto}.map-tools{top:132px}}
+@media(max-width:650px){.map-topbar{display:grid;justify-items:start;gap:6px}.basemap-control{max-width:calc(100vw - 22px)}.basemap-button{font-size:9px;padding:7px 6px}.map-tools{top:116px}.map-layer-hint{display:none}}
 .warning-panel{border:1px solid #cbded1;border-radius:9px;background:#f5faf6;padding:13px;margin-top:15px}
 .warning-panel.exceed{border-color:#e5a69c;background:#fff6f3}
 .warning-heading{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.warning-heading strong{font:800 12px "Manrope",sans-serif;color:#244d39}.warning-panel.exceed .warning-heading strong{color:#a3372e}.warning-heading small{font-size:9px;color:#6f8476;white-space:nowrap}

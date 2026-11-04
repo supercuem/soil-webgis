@@ -42,12 +42,32 @@ function rectangle(lon, lat) {
   return [[lon - 0.035, lat - 0.025], [lon + 0.035, lat - 0.025],
     [lon + 0.035, lat + 0.025], [lon - 0.035, lat + 0.025], [lon - 0.035, lat - 0.025]];
 }
-const soil = {type: 'FeatureCollection', metadata: {source_file: 'SYNTHETIC_DEMO_ONLY'}, features: examples.slice(0, 3).map((point, index) => ({
-  type: 'Feature', properties: {code: `DEMO-VUNG-${index + 1}`, symbol: `DEMO-${index + 1}`, area_ha: null},
+const soilNames = ['Nhóm phù sa minh họa', 'Nhóm đất đỏ minh họa', 'Nhóm đất xám minh họa'];
+const soil = {type: 'FeatureCollection', metadata: {source_file: 'SYNTHETIC_DEMO_ONLY'}, features: examples.map((point, index) => ({
+  type: 'Feature', properties: {code: `DEMO-VUNG-${index + 1}`, symbol: `DEMO-${index % 3 + 1}`, name: soilNames[index % 3], area_ha: null},
   geometry: {type: 'Polygon', coordinates: [rectangle(point[3], point[2])]},
 }))};
+
+const parcels = {type: 'FeatureCollection', metadata: {source_file: 'SYNTHETIC_DEMO_ONLY', layer_meaning: 'illustrative_parcels_not_cadastral_records'}, features: []};
+examples.forEach(([, , latitude, longitude], siteIndex) => {
+  for (let row = 0; row < 3; row++) {
+    for (let column = 0; column < 3; column++) {
+      const parcel = row * 3 + column + 1;
+      const west = longitude - 0.015 + column * 0.01;
+      const south = latitude - 0.012 + row * 0.008;
+      const east = west + 0.01;
+      const north = south + 0.008;
+      parcels.features.push({type: 'Feature', properties: {
+        code: `DEMO-T${String(siteIndex + 1).padStart(2, '0')}-${String(parcel).padStart(2, '0')}`,
+        sheet: `DEMO-${String(siteIndex + 1).padStart(2, '0')}`,
+        parcel: String(parcel).padStart(2, '0'),
+      }, geometry: {type: 'Polygon', coordinates: [[[west, south], [east, south], [east, north], [west, north], [west, south]]]}});
+    }
+  }
+});
 
 await mkdir(root, {recursive: true});
 await writeFile(new URL('survey.json', root), JSON.stringify(survey));
 await writeFile(new URL('soil-polygons.geojson', root), JSON.stringify(soil));
-console.log(`Generated ${sites.length} fabricated sites and ${soil.features.length} illustrative zones.`);
+await writeFile(new URL('parcel-polygons.geojson', root), JSON.stringify(parcels));
+console.log(`Generated ${sites.length} fabricated sites, ${soil.features.length} illustrative soil zones and ${parcels.features.length} illustrative parcels.`);
