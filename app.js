@@ -28,7 +28,11 @@ function assessSample(sample, landCategory) {
 }
 
 // This public preview contains fabricated examples only; research data stays private.
-const state={data:null,map:null,markers:null,basemap:"street",layers:{soil:null,cadastre:null},loading:{soil:null,cadastre:null},metric:"ph",depth:"0-30",landCategory:"1",district:"all",query:"",showPoints:true,selected:null,location:null};
+function nextVisibleLayers(current,mode){
+  if(!["cadastre","soil"].includes(mode))throw new RangeError("Unknown overlay");
+  return {...current,[mode]:!current[mode]};
+}
+const state={data:null,map:null,markers:null,visibleLayers:{soil:false,cadastre:false},layers:{soil:null,cadastre:null},loading:{soil:null,cadastre:null},metric:"ph",depth:"0-30",landCategory:"1",district:"all",query:"",showPoints:true,selected:null,location:null};
 const $=id=>document.getElementById(id);
 const number=new Intl.NumberFormat("vi-VN",{maximumFractionDigits:5});
 const indicator=()=>state.data?.indicators.find(item=>item.code===state.metric);
@@ -62,9 +66,9 @@ function renderLegend(){
   (scale?[scale.min,(scale.min+scale.max)/2,scale.max]:[null,null,null]).forEach(v=>{const span=document.createElement("span");span.textContent=v===null?"—":number.format(v);labels.append(span);});
   const note=document.createElement("div");note.className="legend-note";note.textContent=`Giá trị tương đối · tầng ${state.depth} cm · không phải mức cảnh báo`;
   el.append(title,bar,labels,note);
-  if(state.basemap!=="street"){
+  if(state.visibleLayers.soil||state.visibleLayers.cadastre){
     const mapNote=document.createElement("div");mapNote.className="legend-map-note";
-    mapNote.textContent=state.basemap==="cadastre"?"Đường viền nâu: ranh thửa giả lập":"Mảng màu: nhóm đất giả lập";
+    mapNote.textContent=[state.visibleLayers.soil?"Mảng màu: nhóm đất giả lập":null,state.visibleLayers.cadastre?"Đường viền nâu: ranh thửa giả lập":null].filter(Boolean).join(" · ");
     el.append(mapNote);
   }
 }
@@ -90,7 +94,7 @@ function renderMarkers(){
   if(!state.map||!state.markers)return;
   state.markers.clearLayers();if(!state.showPoints)return;
   const sites=filteredSites(),scale=scaleFor(sites);
-  sites.forEach(site=>{const marker=L.circleMarker([site.latitude,site.longitude],{radius:state.selected===site.code?11:8,color:"#fff",weight:2.5,fillColor:colorFor(site,scale),fillOpacity:.95,bubblingMouseEvents:false});marker.bindTooltip(`${site.code} · ${formatReading(readingAt(site),indicator()?.unit)}`);marker.on("click",()=>selectSite(site,false));state.markers.addLayer(marker);});
+  sites.forEach(site=>{const marker=L.circleMarker([site.latitude,site.longitude],{pane:"samplePane",radius:state.selected===site.code?11:8,color:"#fff",weight:2.5,fillColor:colorFor(site,scale),fillOpacity:.95,bubblingMouseEvents:false});marker.bindTooltip(`${site.code} · ${formatReading(readingAt(site),indicator()?.unit)}`);marker.on("click",()=>selectSite(site,false));state.markers.addLayer(marker);});
 }
 function renderAll(){renderLegend();renderStats();renderList();renderMarkers();}
 function warningPanel(site){
@@ -123,8 +127,8 @@ function selectSite(site,pan){
 }
 function refreshSelectedDetail(){if(!$("sample-dialog").open||!state.selected)return;const site=state.data?.sites.find(item=>item.code===state.selected);if(site)selectSite(site,false);}
 function fitSites(){if(!state.map)return;const sites=filteredSites();if(!sites.length){toast("Không có điểm mẫu để phóng tới.");return;}state.map.fitBounds(L.latLngBounds(sites.map(site=>[site.latitude,site.longitude])).pad(.2),{maxZoom:12});}
-function soilStyle(feature){const group=Number((feature.properties.symbol||"").split("-").at(-1))||1;const colors=["#8baa6d","#c39068","#b6aa79"];return{color:"#526b58",weight:1,opacity:.8,fillColor:colors[(group-1)%colors.length],fillOpacity:.55,bubblingMouseEvents:false};}
-function cadastreStyle(){return{color:"#8b613f",weight:1.5,opacity:.95,fillColor:"#f4e7c7",fillOpacity:.34,bubblingMouseEvents:false};}
+function soilStyle(feature){const group=Number((feature.properties.symbol||"").split("-").at(-1))||1;const colors=["#8baa6d","#c39068","#b6aa79"];return{pane:"soilPane",color:"#526b58",weight:1,opacity:.8,fillColor:colors[(group-1)%colors.length],fillOpacity:.55,bubblingMouseEvents:false};}
+function cadastreStyle(){return{pane:"cadastrePane",color:"#8b613f",weight:1.5,opacity:.95,fillColor:"#f4e7c7",fillOpacity:.08,bubblingMouseEvents:false};}
 function bindMapPopup(feature,layer,mode){
   const popup=document.createElement("div"),strong=document.createElement("strong"),small=document.createElement("small");popup.className="soil-popup";
   if(mode==="soil"){
@@ -136,7 +140,7 @@ function bindMapPopup(feature,layer,mode){
   }
   popup.append(strong,small);layer.bindPopup(popup);
 }
-async function loadBasemapLayer(mode){
+async function loadOverlayLayer(mode){
   if(state.layers[mode])return state.layers[mode];
   if(state.loading[mode])return state.loading[mode];
   const file=mode==="soil"?"soil-polygons.geojson":"parcel-polygons.geojson";
@@ -145,29 +149,31 @@ async function loadBasemapLayer(mode){
     if(!response.ok)throw new Error(`HTTP ${response.status}`);
     const geojson=await response.json();
     if(geojson.metadata?.source_file!=="SYNTHETIC_DEMO_ONLY"||!Array.isArray(geojson.features))throw new Error("Not synthetic demo data");
-    const layer=L.geoJSON(geojson,{style:mode==="soil"?soilStyle:cadastreStyle,bubblingMouseEvents:false,onEachFeature:(feature,shape)=>bindMapPopup(feature,shape,mode)});
+    const layer=L.geoJSON(geojson,{pane:mode==="soil"?"soilPane":"cadastrePane",style:mode==="soil"?soilStyle:cadastreStyle,bubblingMouseEvents:false,onEachFeature:(feature,shape)=>bindMapPopup(feature,shape,mode)});
     state.layers[mode]=layer;
     return layer;
   })().finally(()=>{state.loading[mode]=null;});
   return state.loading[mode];
 }
-function updateBasemapButtons(){
-  document.querySelectorAll(".basemap-button[data-basemap]").forEach(button=>{
-    const active=button.dataset.basemap===state.basemap;
+function updateOverlayButtons(){
+  document.querySelectorAll(".basemap-button[data-overlay]").forEach(button=>{
+    const active=state.visibleLayers[button.dataset.overlay];
     button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active));
   });
   renderLegend();
 }
-async function setBasemap(mode){
-  if(!state.map||!["street","cadastre","soil"].includes(mode))return;
-  state.basemap=mode;updateBasemapButtons();
-  Object.values(state.layers).forEach(layer=>{if(layer&&state.map.hasLayer(layer))state.map.removeLayer(layer);});
-  if(mode==="street")return;
+async function toggleOverlay(mode){
+  if(!state.map||!["cadastre","soil"].includes(mode))return;
+  state.visibleLayers=nextVisibleLayers(state.visibleLayers,mode);updateOverlayButtons();
+  if(!state.visibleLayers[mode]){
+    if(state.layers[mode])state.map.removeLayer(state.layers[mode]);
+    return;
+  }
   toast(mode==="cadastre"?"Đang tải ranh thửa minh họa…":"Đang tải nhóm đất minh họa…");
   try{
-    const layer=await loadBasemapLayer(mode);
-    if(state.basemap!==mode)return;
-    layer.addTo(state.map);layer.bringToBack();
+    const layer=await loadOverlayLayer(mode);
+    if(!state.visibleLayers[mode])return;
+    layer.addTo(state.map);
     if(mode==="cadastre"&&state.map.getZoom()<13&&state.data?.sites.length){
       const center=state.map.getCenter();
       const nearest=state.data.sites.reduce((best,site)=>{
@@ -178,11 +184,11 @@ async function setBasemap(mode){
     }
     toast(mode==="cadastre"?"Đã hiển thị ranh thửa giả lập.":"Đã hiển thị vùng thổ nhưỡng giả lập.");
   }catch{
-    if(state.basemap!==mode)return;
-    state.basemap="street";updateBasemapButtons();toast("Không tải được lớp minh họa. Đã chuyển về bản đồ đường phố.");
+    if(!state.visibleLayers[mode])return;
+    state.visibleLayers[mode]=false;updateOverlayButtons();toast("Không tải được lớp minh họa. Bản đồ đường phố vẫn hiển thị.");
   }
 }
-function initMap(){if(typeof L==="undefined"){$("map-error").hidden=false;return;}state.map=L.map("map",{zoomControl:false,preferCanvas:true}).setView([10.95,107.05],10);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map);state.map.on("click",event=>{$("coordinate-chip").textContent=`Tọa độ: ${event.latlng.lat.toFixed(5)}, ${event.latlng.lng.toFixed(5)} · Chưa có mẫu gắn tại vị trí này`;toast("Chưa có số đo tại tọa độ này. Bấm một điểm mẫu để xem mức đo và cảnh báo.");});}
+function initMap(){if(typeof L==="undefined"){$("map-error").hidden=false;return;}state.map=L.map("map",{zoomControl:false,preferCanvas:false}).setView([10.95,107.05],10);[["soilPane",380],["cadastrePane",390],["samplePane",430]].forEach(([name,zIndex])=>{state.map.createPane(name);state.map.getPane(name).style.zIndex=zIndex;});L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map);state.map.on("click",event=>{$("coordinate-chip").textContent=`Tọa độ: ${event.latlng.lat.toFixed(5)}, ${event.latlng.lng.toFixed(5)} · Chưa có mẫu gắn tại vị trí này`;toast("Chưa có số đo tại tọa độ này. Bấm một điểm mẫu để xem mức đo và cảnh báo.");});}
 function csvCell(value){const plain=value==null?"":String(value),safe=typeof value==="string"&&/^[=+@\-\t\r]/.test(plain)?`'${plain}`:plain;return `"${safe.replaceAll('"','""')}"`;}
 function exportCsv(){
   if(!state.data)return;const headers=["DU_LIEU_GIA_LAP","ma_diem","huyen","tinh","do_sau_cm","vi_do_minh_hoa","kinh_do_minh_hoa",...state.data.indicators.map(item=>`${item.code}_${item.unit}`)];
@@ -196,9 +202,9 @@ function initControls(){
   $("metric-select").addEventListener("change",event=>{state.metric=event.target.value;renderAll();refreshSelectedDetail();});
   $("land-category").addEventListener("change",event=>{state.landCategory=event.target.value;refreshSelectedDetail();});
   $("show-points").addEventListener("change",event=>{state.showPoints=event.target.checked;renderMarkers();});
-  document.querySelectorAll(".basemap-button[data-basemap]").forEach(button=>button.addEventListener("click",()=>setBasemap(button.dataset.basemap)));
+  document.querySelectorAll(".basemap-button[data-overlay]").forEach(button=>button.addEventListener("click",()=>toggleOverlay(button.dataset.overlay)));
   $("export-csv").addEventListener("click",exportCsv);$("zoom-in").addEventListener("click",()=>state.map?.zoomIn());$("zoom-out").addEventListener("click",()=>state.map?.zoomOut());$("fit-points").addEventListener("click",fitSites);
-  $("locate-me").addEventListener("click",()=>{if(!state.map||!navigator.geolocation){toast("Trình duyệt không hỗ trợ định vị.");return;}navigator.geolocation.getCurrentPosition(({coords})=>{if(state.location)state.map.removeLayer(state.location);state.location=L.circleMarker([coords.latitude,coords.longitude],{radius:8,color:"#fff",weight:3,fillColor:"#268bd2",fillOpacity:1}).addTo(state.map);state.map.setView([coords.latitude,coords.longitude],13);$("coordinate-chip").textContent=`Vị trí của bạn: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;},()=>toast("Không lấy được vị trí."),{enableHighAccuracy:false,timeout:10000});});
+  $("locate-me").addEventListener("click",()=>{if(!state.map||!navigator.geolocation){toast("Trình duyệt không hỗ trợ định vị.");return;}navigator.geolocation.getCurrentPosition(({coords})=>{if(state.location)state.map.removeLayer(state.location);state.location=L.circleMarker([coords.latitude,coords.longitude],{pane:"samplePane",radius:8,color:"#fff",weight:3,fillColor:"#268bd2",fillOpacity:1}).addTo(state.map);state.map.setView([coords.latitude,coords.longitude],13);$("coordinate-chip").textContent=`Vị trí của bạn: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;},()=>toast("Không lấy được vị trí."),{enableHighAccuracy:false,timeout:10000});});
   $("close-detail").addEventListener("click",()=>$("sample-dialog").close());$("sample-dialog").addEventListener("close",()=>{state.selected=null;renderList();renderMarkers();});
 }
 async function loadSurvey(){
@@ -209,4 +215,4 @@ async function loadSurvey(){
   }catch{const message=document.createElement("p");message.className="empty-state";message.textContent="Không tải được dữ liệu khảo sát. Hãy kiểm tra kết nối rồi tải lại trang.";$("sample-list").replaceChildren(message);$("map-caption-sub").textContent="Chưa tải được dữ liệu";toast("Dữ liệu chưa tải được; không hiển thị điểm giả.");}
 }
 if (typeof document !== "undefined") document.addEventListener("DOMContentLoaded",()=>{initControls();initMap();renderAll();loadSurvey();});
-if (typeof module !== "undefined" && module.exports) module.exports = {LIMITS, assessIndicator, assessSample};
+if (typeof module !== "undefined" && module.exports) module.exports = {LIMITS, assessIndicator, assessSample, nextVisibleLayers};

@@ -4,7 +4,7 @@
 
 **Goal:** Add public synthetic cadastral and soil map modes to the existing GitHub Pages preview.
 
-**Architecture:** Extend the deterministic demo generator with a parcel GeoJSON and six soil zones. Leaflet keeps OpenStreetMap underneath and switches one illustrative polygon layer at a time while preserving sample markers.
+**Architecture:** Extend the deterministic demo generator with a parcel GeoJSON and six soil zones. Leaflet keeps OpenStreetMap underneath and allows either or both illustrative polygon layers, with soil under parcel outlines and sample markers on top.
 
 **Tech Stack:** Static HTML/CSS/JavaScript, Leaflet, Node test runner.
 
@@ -18,8 +18,8 @@
 
 ## Review Focus
 
-- A failed GeoJSON fetch returns to Street mode with an understandable message.
-- Rapid switching cannot display a layer chosen before the current one.
+- A failed GeoJSON fetch turns off only that overlay with an understandable message.
+- Rapid switching cannot display an overlay that the user turned off.
 - Sample markers stay clickable above illustrative polygons.
 - Every generated parcel has only synthetic identifiers and valid closed geometry.
 - Both new modes are usable at phone width.
@@ -35,13 +35,13 @@
 - [x] Extend the generator and regenerate checked-in data.
 - [x] Run the test and confirm it passes.
 
-### Task 2: Switch visible map modes
+### Task 2: Toggle visible map layers
 
 **Files:** `index.html`, `app.js`, `style.css`, `tests/demo.test.cjs`
 
-- [x] Write a failing test for three enabled map mode controls and synthetic labels.
+- [x] Write a failing test for the map layer controls and synthetic labels.
 - [x] Run the test and confirm the expected failure.
-- [x] Wire exclusive mode switching, lazy polygon loading, popups, and mobile control styling.
+- [x] Wire independent overlay switching, lazy polygon loading, popups, and mobile control styling.
 - [x] Run the Node tests and perform a browser interaction check.
 
 ### Task 3: Publish public preview

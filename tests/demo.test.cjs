@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const {assessSample} = require('../app.js');
+const {assessSample, nextVisibleLayers} = require('../app.js');
 
 const root = path.resolve(__dirname, '..');
 const survey = JSON.parse(fs.readFileSync(path.join(root, 'data/processed/survey.json'), 'utf8'));
@@ -25,11 +25,17 @@ test('illustrative soil and parcel maps use only synthetic geometries and labels
   assert.ok(parcels.features.every(feature => !/TENCHU|DIACHI|THUAID/i.test(JSON.stringify(feature))));
 });
 
-test('map controls offer three exclusive, clearly synthetic modes', () => {
+test('the cadastral and soil overlays toggle independently over the street map', () => {
+  const cadastral = nextVisibleLayers({cadastre: false, soil: false}, 'cadastre');
+  assert.deepEqual(cadastral, {cadastre: true, soil: false});
+  const both = nextVisibleLayers(cadastral, 'soil');
+  assert.deepEqual(both, {cadastre: true, soil: true});
+  assert.deepEqual(nextVisibleLayers(both, 'cadastre'), {cadastre: false, soil: true});
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  for (const mode of ['street', 'cadastre', 'soil']) {
-    assert.match(html, new RegExp(`data-basemap="${mode}"`));
+  for (const mode of ['cadastre', 'soil']) {
+    assert.match(html, new RegExp(`data-overlay="${mode}"`));
   }
+  assert.match(html, /Đường phố · OpenStreetMap/);
   assert.match(html, /Địa chính \(minh họa\)/);
   assert.match(html, /Thổ nhưỡng \(minh họa\)/);
 });

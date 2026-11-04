@@ -4,4 +4,4 @@
 
 Dữ liệu khảo sát thật, tọa độ lấy mẫu, API PostgreSQL và tài khoản người dùng không nằm trong repository này. Mô hình AI dự đoán chưa được xây dựng.
 
-Mở `index.html` qua web server tĩnh để xem. Chuyển Đường phố, Địa chính (minh họa) và Thổ nhưỡng (minh họa) ở góc trên bản đồ; bấm đa giác để xem nhãn giả lập. Bản đồ nền OpenStreetMap cần Internet. Có thể tạo lại dữ liệu minh họa bằng `node scripts/generate-demo-data.mjs`.
+Mở `index.html` qua web server tĩnh để xem. Đường phố OpenStreetMap luôn làm nền; bật/tắt độc lập Địa chính (minh họa) và Thổ nhưỡng (minh họa) ở góc trên bản đồ, kể cả bật đồng thời. Bấm đa giác để xem nhãn giả lập. Bản đồ nền OpenStreetMap cần Internet. Có thể tạo lại dữ liệu minh họa bằng `node scripts/generate-demo-data.mjs`.

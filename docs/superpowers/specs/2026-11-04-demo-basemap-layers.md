@@ -1,8 +1,8 @@
 # Hai chế độ bản đồ minh họa
 
-Trang GitHub Pages công khai cho phép chuyển giữa Đường phố, Địa chính và Thổ nhưỡng. Hai chế độ mới dùng hình học được tạo hoàn toàn giả lập quanh sáu điểm DEMO hiện có. Ranh thửa có mã tờ/thửa minh họa; vùng thổ nhưỡng có nhóm đất minh họa. Người xem bấm vào đa giác để biết đó là dữ liệu giả lập. Điểm mẫu và các bộ lọc hiện có tiếp tục hoạt động trên cả ba chế độ.
+Trang GitHub Pages công khai giữ Đường phố OpenStreetMap làm nền và cho bật/tắt độc lập hai lớp phủ Địa chính, Thổ nhưỡng. Hai lớp mới dùng hình học được tạo hoàn toàn giả lập quanh sáu điểm DEMO hiện có. Ranh thửa có mã tờ/thửa minh họa; vùng thổ nhưỡng có nhóm đất minh họa. Người xem bấm vào đa giác để biết đó là dữ liệu giả lập. Điểm mẫu và các bộ lọc hiện có tiếp tục hoạt động khi bật riêng hoặc đồng thời các lớp.
 
-Nguồn địa chính và thổ nhưỡng thật trong thư mục dự án riêng không được đọc khi tạo bản công khai. Trang không công bố chủ sử dụng đất, địa chỉ, tọa độ khảo sát, hoặc kết quả phân tích thật. Nút chuyển chế độ là độc quyền để tránh hai lớp tô màu che nhau. OpenStreetMap vẫn làm nền tham chiếu dưới hai lớp minh họa.
+Nguồn địa chính và thổ nhưỡng thật trong thư mục dự án riêng không được đọc khi tạo bản công khai. Trang không công bố chủ sử dụng đất, địa chỉ, tọa độ khảo sát, hoặc kết quả phân tích thật. Thổ nhưỡng tô màu nhẹ dưới ranh thửa, và điểm mẫu nằm trên cùng để luôn bấm được.
 
 ## Cách triển khai
 

@@ -77,7 +77,7 @@
               <label class="field-label" for="metric-select">Chỉ tiêu</label>
               <div class="select-wrap"><select id="metric-select"><option value="ph">pH</option></select></div>
               <label class="switch-row" for="show-points"><span>Hiện điểm lấy mẫu</span><span class="switch"><input id="show-points" type="checkbox" checked /><span class="switch-track"></span></span></label>
-              <p class="section-hint map-layer-hint">Chuyển bản đồ nền ở góc trên bản đồ để xem ranh thửa hoặc nhóm đất minh họa.</p>
+              <p class="section-hint map-layer-hint">Bật riêng hoặc đồng thời hai lớp bản đồ ở góc trên để xem ranh thửa và nhóm đất minh họa.</p>
             </section>
 
             <section class="control-section" aria-labelledby="stats-title">
@@ -100,10 +100,10 @@
           <div id="map-error" class="map-error" hidden role="alert">Không tải được thư viện bản đồ. Hãy kiểm tra kết nối Internet rồi tải lại trang.</div>
           <div class="map-topbar">
             <div class="map-caption"><span class="map-caption-dot" aria-hidden="true"></span><span><strong>Bản đồ minh họa</strong><small id="map-caption-sub">Đang tải dữ liệu giả lập</small></span></div>
-            <div class="basemap-control" role="group" aria-label="Bản đồ nền">
-              <button type="button" class="basemap-button active" data-basemap="street" aria-pressed="true">Đường phố</button>
-              <button type="button" class="basemap-button" data-basemap="cadastre" aria-pressed="false">Địa chính (minh họa)</button>
-              <button type="button" class="basemap-button" data-basemap="soil" aria-pressed="false">Thổ nhưỡng (minh họa)</button>
+            <div class="basemap-control" role="group" aria-label="Lớp bản đồ">
+              <span class="basemap-label">Đường phố · OpenStreetMap</span>
+              <button type="button" class="basemap-button" data-overlay="cadastre" aria-pressed="false">Địa chính (minh họa)</button>
+              <button type="button" class="basemap-button" data-overlay="soil" aria-pressed="false">Thổ nhưỡng (minh họa)</button>
             </div>
           </div>
           <div class="map-tools" aria-label="Điều khiển bản đồ">
