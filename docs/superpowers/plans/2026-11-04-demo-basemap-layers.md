@@ -49,5 +49,5 @@
 **Files:** `README.md` plus changed assets
 
 - [x] Confirm the checked-in data remains fabricated and no private source file is staged.
-- [ ] Commit and push to `supercuem/soil-webgis`.
-- [ ] Verify the live GitHub Pages URL loads the three modes.
+- [x] Commit and push to `supercuem/soil-webgis`.
+- [x] Verify the live GitHub Pages URL loads the three modes.
